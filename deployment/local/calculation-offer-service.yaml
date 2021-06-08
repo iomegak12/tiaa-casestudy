@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: casestudy-calcandofferservice-config-map
+  labels:
+    env: staging
+    businessUnit: calculationsandoffers
+stringData:
+  ASPNETCORE_URLS: http://*:8080
+  ASPNETCORE_ENVIRONMENT: Development
+data:
+  MONGO_CONNECTION_STRING: mongodb://scbuser:Prestige@ramkumar-mongodbcluster-shard-00-00.jptuw.mongodb.net:27017,ramkumar-mongodbcluster-shard-00-01.jptuw.mongodb.net:27017,ramkumar-mongodbcluster-shard-00-02.jptuw.mongodb.net:27017/calculationservicesrequestsdb?ssl=true&replicaSet=atlas-duot5o-shard-0&authSource=admin&retryWrites=true&w=majority    
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: casestudy-calcandofferservice-deployment
+  labels:
+    env: staging
+    businessUnit: calculationsandoffers
+spec:
+  replicas: 2
+  selector:
+    matchExpressions:
+    - {key: env, operator: In, values: ['staging']}
+    - {key: businessUnit, operator: In, values: ['calculationsandoffers']}
+  template:
+    metadata:
+      name: casestudy-calcandofferservice-pod
+      labels:
+        env: staging
+        businessUnit: calculationsandoffers
+    spec:
+      containers:
+      - name: casestudy-calcandofferservice-container
+        image: iomega/casestudy-calculationservice
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ASPNETCORE_URLS
+          valueFrom:
+            configMapKeyRef:
+              name: casestudy-calcandofferservice-config-map
+              key: ASPNETCORE_URLS
+        - name: ASPNETCORE_ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: casestudy-calcandofferservice-config-map
+              key: ASPNETCORE_ENVIRONMENT
+        - name: MONGO_CONNECTION_STRING
+          valueFrom:
+            configMapKeyRef:
+              name: casestudy-calcandofferservice-config-map
+              key: MONGO_CONNECTION_STRING
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: casestudy-calcandofferservice-service
+  labels:
+    env: staging
+    businessUnit: calculationsandoffers
+spec:
+  type: ClusterIP
+  ports:
+  - targetPort: 8080
+    port: 8080
+  selector:
+    env: staging
+    businessUnit: calculationsandoffers
+
+        
